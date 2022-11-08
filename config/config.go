@@ -7,14 +7,9 @@ import (
 
 	_ "github.com/creasty/defaults"
 	"github.com/go-playground/validator/v10"
+	croc "github.com/parkervcp/crocgodyl"
 	"gopkg.in/yaml.v3"
 )
-
-type NodeInformation struct {
-	ID    int
-	URL   string `json:"remote"`
-	Token string `json:"token"`
-}
 
 type Config struct {
 	Address string `default:"127.0.0.1" yaml:"address"`
@@ -23,7 +18,7 @@ type Config struct {
 		URL string `yaml:"url"`
 		Key string `yaml:"key"`
 	} `yaml:"panel"`
-	Nodes map[int]*NodeInformation `default:"{}" yaml:"-"`
+	Nodes map[int]*croc.NodeConfiguration `default:"{}" yaml:"-"`
 }
 
 func Get() (*Config, error) {

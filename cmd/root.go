@@ -1,13 +1,10 @@
 package cmd
 
 import (
-	"net/http"
-
-	log "github.com/sirupsen/logrus"
 	"github.com/go-playground/validator/v10"
+	croc "github.com/parkervcp/crocgodyl"
 	"github.com/pteropackages/iris/config"
-	"github.com/pteropackages/iris/panel"
-	"github.com/pteropackages/iris/router"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -31,16 +28,21 @@ var rootCmd = &cobra.Command{
 			}
 		}
 
-		client := panel.New(cfg)
-		if err = client.GetNodeInformation()
-
-		server := &http.Server{
-			Addr:    "localhost:5500",
-			Handler: router.Setup(),
+		app, _ := croc.NewApp(cfg.Panel.URL, cfg.Panel.Key)
+		nodes, err := app.GetNodes()
+		if err != nil {
+			log.WithError(err).Fatal("failed to fetch nodes from panel")
 		}
 
-		_ = server.ListenAndServe()
-		// if err := server.ListenAndServe(); err != nil {}
+		for _, n := range nodes {
+			c, err := app.GetNodeConfiguration(n.ID)
+			if err != nil {
+				log.WithField("node", n.ID).WithError(err).Warn("failed to get configuration")
+				continue
+			}
+
+			cfg.Nodes[n.ID] = c
+		}
 	},
 }
 
