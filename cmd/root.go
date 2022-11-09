@@ -13,6 +13,9 @@ var rootCmd = &cobra.Command{
 	Use: "iris",
 	Run: func(cmd *cobra.Command, args []string) {
 		log := logrus.New()
+		log.SetFormatter(&IrisFormatter{
+			DisableColors: false,
+		})
 
 		cfg, err := config.Get()
 		if err != nil {
