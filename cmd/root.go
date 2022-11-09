@@ -7,16 +7,12 @@ import (
 	"github.com/pteropackages/iris/shard"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	easy "github.com/t-tomalak/logrus-easy-formatter"
 )
 
 var rootCmd = &cobra.Command{
 	Use: "iris",
 	Run: func(cmd *cobra.Command, args []string) {
 		log := logrus.New()
-		log.SetFormatter(&easy.Formatter{
-			LogFormat: "%time% %lvl% - %msg%\n",
-		})
 
 		cfg, err := config.Get()
 		if err != nil {
