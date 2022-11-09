@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"time"
+
 	"github.com/go-playground/validator/v10"
 	croc "github.com/parkervcp/crocgodyl"
 	"github.com/pteropackages/iris/config"
@@ -33,6 +35,8 @@ var rootCmd = &cobra.Command{
 		}
 
 		app, _ := croc.NewApp(cfg.Panel.URL, cfg.Panel.Key)
+		app.Http.Timeout = time.Duration(time.Second * 15)
+
 		// crocgodyl doesn't support cycling paginations yet, so this is all we can do for now
 		servers, err := app.GetServers()
 		if err != nil {
