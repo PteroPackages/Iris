@@ -9,6 +9,7 @@ require (
 	github.com/parkervcp/crocgodyl v0.1.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.6.1
+	github.com/t-tomalak/logrus-easy-formatter v0.0.0-20190827215021-c074f06c5816
 	gopkg.in/yaml.v3 v3.0.1
 )
 
