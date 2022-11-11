@@ -3,18 +3,25 @@ package shard
 import (
 	"bytes"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/gorilla/websocket"
+	croc "github.com/parkervcp/crocgodyl"
 )
 
+type payload struct {
+	event string
+	args  []string
+}
+
 type Shard struct {
-	manager *Manager
-	cancel  chan struct{}
-	uuid    string
-	path    string
-	data    *bytes.Buffer
-	log     *bytes.Buffer
+	client *croc.Client
+	cancel chan struct{}
+	uuid   string
+	path   string
+	data   *bytes.Buffer
+	log    *bytes.Buffer
 }
 
 func (s *Shard) UUID() string {
@@ -22,12 +29,12 @@ func (s *Shard) UUID() string {
 }
 
 func (s *Shard) Launch() error {
-	a, err := s.manager.client.GetServerWebSocket(s.uuid)
+	a, err := s.client.GetServerWebSocket(s.uuid)
 	if err != nil {
 		return err
 	}
 
-	conn, _, err := websocket.DefaultDialer.Dial(a.Socket, nil)
+	conn, _, err := websocket.DefaultDialer.Dial(a.Socket, http.Header{"Origin": []string{s.client.PanelURL}})
 	if err != nil {
 		return err
 	}
@@ -36,6 +43,8 @@ func (s *Shard) Launch() error {
 	defer ticker.Stop()
 
 	go func() {
+		conn.WriteJSON(payload{event: "auth", args: []string{a.Token}})
+
 		for {
 			select {
 			case <-s.cancel:

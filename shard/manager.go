@@ -40,18 +40,19 @@ func (m *Manager) CreateShard(uuid, path string) error {
 	}
 
 	s := &Shard{
-		manager: m,
-		cancel:  m.cancel,
-		uuid:    uuid,
-		path:    path,
-		data:    &bytes.Buffer{},
-		log:     &bytes.Buffer{},
+		client: m.client,
+		cancel: m.cancel,
+		uuid:   uuid,
+		path:   path,
+		data:   &bytes.Buffer{},
+		log:    &bytes.Buffer{},
 	}
 	m.shards = append(m.shards, s)
 
 	return nil
 }
 
-func (m *Manager) DestroyAll() {
+func (m *Manager) Destroy() {
 	m.cancel <- struct{}{}
+	close(m.cancel)
 }

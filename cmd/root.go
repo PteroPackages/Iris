@@ -83,11 +83,13 @@ var rootCmd = &cobra.Command{
 
 		if launched == 0 {
 			log.Error("failed to launch any shards, aborting")
-			manager.DestroyAll()
+			manager.Destroy()
 			return
 		}
 
 		<-sc
+		log.Info("received sigint; destroying all shards")
+		manager.Destroy()
 	},
 }
 
