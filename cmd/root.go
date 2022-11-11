@@ -55,7 +55,7 @@ var rootCmd = &cobra.Command{
 
 			log.WithField("uuid", s.UUID).Info("creating shard")
 			if err = manager.CreateShard(s.UUID, cfg.DataDirectory); err != nil {
-				log.WithField("uuid", s.UUID).WithError(err).Warn("failed to create shard")
+				log.WithError(err).WithField("uuid", s.UUID).Warn("failed to create shard")
 			}
 		}
 
@@ -73,7 +73,7 @@ var rootCmd = &cobra.Command{
 
 		for _, s := range manager.All() {
 			if err = s.Launch(); err != nil {
-				log.WithField("uuid", s.UUID()).WithError(err).Warn("failed to launch shard")
+				log.WithError(err).WithField("uuid", s.UUID()).Warn("failed to launch shard")
 				continue
 			}
 
@@ -86,9 +86,10 @@ var rootCmd = &cobra.Command{
 			manager.Destroy()
 			return
 		}
+		log.Infof("tracking %d shards", launched)
 
 		<-sc
-		log.Info("received sigint; destroying all shards")
+		log.Warn("received sigint; destroying all shards")
 		manager.Destroy()
 	},
 }
@@ -104,5 +105,7 @@ func contains(x int, y []int) bool {
 }
 
 func Execute() {
-	_ = rootCmd.Execute()
+	if err := rootCmd.Execute(); err != nil {
+		logrus.WithError(err).Fatal("failed to start application")
+	}
 }
