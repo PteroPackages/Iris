@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"os"
+	"os/signal"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -62,6 +64,30 @@ var rootCmd = &cobra.Command{
 		}
 
 		log.Infof("created %d shards, starting launch", manager.Count())
+
+		sc := make(chan os.Signal, 1)
+		signal.Notify(sc, os.Interrupt)
+		defer close(sc)
+
+		launched := 0
+
+		for _, s := range manager.All() {
+			if err = s.Launch(); err != nil {
+				log.WithField("uuid", s.UUID()).WithError(err).Warn("failed to launch shard")
+				continue
+			}
+
+			log.WithField("uuid", s.UUID()).Info("launched shard")
+			launched++
+		}
+
+		if launched == 0 {
+			log.Error("failed to launch any shards, aborting")
+			manager.DestroyAll()
+			return
+		}
+
+		<-sc
 	},
 }
 

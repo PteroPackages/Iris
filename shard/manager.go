@@ -1,6 +1,7 @@
 package shard
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 
@@ -9,7 +10,8 @@ import (
 
 type Manager struct {
 	client *croc.Client
-	shards map[string]*Shard
+	shards []*Shard
+	cancel chan struct{}
 }
 
 func NewManager(url, key string) *Manager {
@@ -17,7 +19,8 @@ func NewManager(url, key string) *Manager {
 
 	return &Manager{
 		client: client,
-		shards: make(map[string]*Shard),
+		shards: []*Shard{},
+		cancel: make(chan struct{}),
 	}
 }
 
@@ -25,29 +28,30 @@ func (m *Manager) Count() int {
 	return len(m.shards)
 }
 
-func (m *Manager) Shard(id string) *Shard {
-	return m.shards[id]
+func (m *Manager) All() []*Shard {
+	return m.shards
 }
 
 func (m *Manager) CreateShard(uuid, path string) error {
 	path = filepath.Join(path, uuid)
 
-	if _, err := os.Stat(path); err != nil {
-		if !os.IsExist(err) {
-			return err
-		}
-
-		if err = os.MkdirAll(path, os.ModeDir); err != nil {
-			return err
-		}
+	if err := os.MkdirAll(path, os.ModeDir); err != nil {
+		return err
 	}
 
 	s := &Shard{
 		manager: m,
+		cancel:  m.cancel,
 		uuid:    uuid,
 		path:    path,
+		data:    &bytes.Buffer{},
+		log:     &bytes.Buffer{},
 	}
-	m.shards[uuid] = s
+	m.shards = append(m.shards, s)
 
 	return nil
+}
+
+func (m *Manager) DestroyAll() {
+	m.cancel <- struct{}{}
 }

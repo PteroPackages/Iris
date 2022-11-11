@@ -6,6 +6,7 @@ require (
 	github.com/creasty/defaults v1.6.0
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-playground/validator/v10 v10.11.1
+	github.com/gorilla/websocket v1.5.0
 	github.com/parkervcp/crocgodyl v0.1.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.6.1
