@@ -53,7 +53,6 @@ func (m *Manager) CreateShard(uuid, path string) error {
 		client: m.client,
 		cancel: m.cancel,
 		uuid:   uuid,
-		path:   path,
 		data:   fd,
 		log:    fl,
 	}

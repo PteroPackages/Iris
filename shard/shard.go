@@ -1,25 +1,19 @@
 package shard
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/gorilla/websocket"
 	croc "github.com/parkervcp/crocgodyl"
 )
 
-type payload struct {
-	event string
-	args  []string
-}
-
 type Shard struct {
 	client *croc.Client
 	cancel chan struct{}
 	uuid   string
-	path   string
 	data   *os.File
 	log    *os.File
 }
@@ -44,37 +38,49 @@ func (s *Shard) Launch() error {
 		return err
 	}
 
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
+	go func() {
+		<-s.cancel
+		conn.WriteMessage(websocket.CloseNormalClosure, nil)
+		_ = conn.Close()
+	}()
 
 	go func() {
-		conn.WriteJSON(payload{event: "auth", args: []string{a.Token}})
+		buf, err := s.newEvent("auth", a.Token)
+		if err != nil {
+			// need a way to log this somehow
+			return
+		}
+		conn.WriteMessage(websocket.TextMessage, buf)
 
 		for {
-			select {
-			case <-s.cancel:
-				conn.WriteMessage(websocket.CloseNormalClosure, nil)
+			mtype, msg, err := conn.ReadMessage()
+			if err != nil {
+				s.log.WriteString(fmt.Sprintf("error reading message: %s\n", err))
+				continue
+			}
+
+			switch mtype {
+			case websocket.CloseMessage:
 				_ = conn.Close()
 				return
-			case <-ticker.C:
-				mtype, msg, err := conn.ReadMessage()
-				if err != nil {
-					s.log.WriteString(fmt.Sprintf("error reading message: %s\n", err))
-					continue
-				}
-
-				switch mtype {
-				case websocket.CloseMessage:
-					_ = conn.Close()
-					return
-				case websocket.TextMessage:
-					s.data.Write(msg)
-				default:
-					continue
-				}
+			case websocket.TextMessage:
+				s.data.Write(msg)
+			default:
+				continue
 			}
 		}
 	}()
 
 	return nil
+}
+
+func (s *Shard) newEvent(name, args string) ([]byte, error) {
+	data := struct {
+		Event string   `json:"event"`
+		Args  []string `json:"args"`
+	}{
+		Event: name,
+		Args:  []string{args},
+	}
+	return json.Marshal(&data)
 }
