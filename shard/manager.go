@@ -1,9 +1,9 @@
 package shard
 
 import (
-	"bytes"
 	"os"
 	"path/filepath"
+	"time"
 
 	croc "github.com/parkervcp/crocgodyl"
 )
@@ -39,13 +39,23 @@ func (m *Manager) CreateShard(uuid, path string) error {
 		return err
 	}
 
+	fd, err := os.Create(filepath.Join(path, time.Now().Format("02-06-2006-150405.data")))
+	if err != nil {
+		return err
+	}
+
+	fl, err := os.Create(filepath.Join(path, time.Now().Format("02-06-2006-150405.log")))
+	if err != nil {
+		return err
+	}
+
 	s := &Shard{
 		client: m.client,
 		cancel: m.cancel,
 		uuid:   uuid,
 		path:   path,
-		data:   &bytes.Buffer{},
-		log:    &bytes.Buffer{},
+		data:   fd,
+		log:    fl,
 	}
 	m.shards = append(m.shards, s)
 

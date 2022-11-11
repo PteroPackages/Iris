@@ -1,9 +1,9 @@
 package shard
 
 import (
-	"bytes"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -20,8 +20,8 @@ type Shard struct {
 	cancel chan struct{}
 	uuid   string
 	path   string
-	data   *bytes.Buffer
-	log    *bytes.Buffer
+	data   *os.File
+	log    *os.File
 }
 
 func (s *Shard) UUID() string {
@@ -29,6 +29,11 @@ func (s *Shard) UUID() string {
 }
 
 func (s *Shard) Launch() error {
+	defer func() {
+		s.data.Close()
+		s.log.Close()
+	}()
+
 	a, err := s.client.GetServerWebSocket(s.uuid)
 	if err != nil {
 		return err
