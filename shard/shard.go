@@ -10,6 +10,11 @@ import (
 	croc "github.com/parkervcp/crocgodyl"
 )
 
+type Payload struct {
+	Event string   `json:"event"`
+	Args  []string `json:"args"`
+}
+
 type Shard struct {
 	client *croc.Client
 	cancel chan struct{}
@@ -45,7 +50,7 @@ func (s *Shard) Launch() error {
 	}()
 
 	go func() {
-		buf, err := s.newEvent("auth", a.Token)
+		buf, err := json.Marshal(&Payload{Event: "auth", Args: []string{a.Token}})
 		if err != nil {
 			// need a way to log this somehow
 			return
@@ -72,15 +77,4 @@ func (s *Shard) Launch() error {
 	}()
 
 	return nil
-}
-
-func (s *Shard) newEvent(name, args string) ([]byte, error) {
-	data := struct {
-		Event string   `json:"event"`
-		Args  []string `json:"args"`
-	}{
-		Event: name,
-		Args:  []string{args},
-	}
-	return json.Marshal(&data)
 }
