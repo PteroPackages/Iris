@@ -75,18 +75,14 @@ func (s *Shard) Launch() error {
 		conn.WriteMessage(websocket.TextMessage, buf)
 
 		for {
-			mtype, msg, err := conn.ReadMessage()
-			if mtype == websocket.CloseMessage {
-				s.log.WithField("uuid", s.uuid).Debug("socket closed unexpectedly")
-				return
-			}
-
+			_, msg, err := conn.ReadMessage()
 			if err != nil {
-				s.log.WithError(err).WithField("uuid", s.uuid).Error("failed to read message")
-				continue
-			}
+				if websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseAbnormalClosure) {
+					s.log.WithField("uuid", s.uuid).Debug("socket closed")
+					break
+				}
 
-			if mtype != websocket.TextMessage {
+				s.log.WithError(err).WithField("uuid", s.uuid).Error("failed to read message")
 				continue
 			}
 
