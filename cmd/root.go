@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"bytes"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -19,6 +21,7 @@ var rootCmd = &cobra.Command{
 		log := logrus.New()
 		log.SetFormatter(&IrisFormatter{
 			DisableColors: false,
+			data:          &bytes.Buffer{},
 		})
 
 		cfg, err := config.Get()
@@ -91,6 +94,15 @@ var rootCmd = &cobra.Command{
 		<-sc
 		log.Warn("received sigint; destroying all shards")
 		manager.Destroy()
+
+		log.Info("saving iris logs")
+		fd, err := os.Create(filepath.Join(cfg.LogDirectory, time.Now().Format("02-06-2006-150405.log")))
+		if err != nil {
+			log.WithError(err).Fatal("failed to save iris logs")
+		}
+
+		defer fd.Close()
+		fd.Write(log.Formatter.(*IrisFormatter).data.Bytes())
 	},
 }
 

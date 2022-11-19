@@ -14,6 +14,7 @@ type IrisFormatter struct {
 	*logrus.TextFormatter
 
 	DisableColors bool
+	data          *bytes.Buffer
 }
 
 func (f *IrisFormatter) wrapColor(c int, v string) string {
@@ -61,5 +62,8 @@ func (f *IrisFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 
 	buf.WriteRune('\n')
 
-	return buf.Bytes(), nil
+	b := buf.Bytes()
+	f.data.Write(b)
+
+	return b, nil
 }
