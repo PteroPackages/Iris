@@ -17,13 +17,16 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use: "iris",
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _ []string) {
 		log := logrus.New()
 		log.SetFormatter(&IrisFormatter{
 			DisableColors: false,
 			data:          &bytes.Buffer{},
 		})
-		log.SetLevel(logrus.DebugLevel) // TODO: switch to cmd flag
+
+		if ok, _ := cmd.Flags().GetBool("debug"); ok {
+			log.SetLevel(logrus.DebugLevel)
+		}
 
 		cfg, err := config.Get()
 		if err != nil {
@@ -103,6 +106,12 @@ var rootCmd = &cobra.Command{
 		defer fd.Close()
 		fd.Write(log.Formatter.(*IrisFormatter).data.Bytes())
 	},
+}
+
+func init() {
+	rootCmd.CompletionOptions.DisableDefaultCmd = true
+
+	rootCmd.Flags().Bool("debug", false, "run in debug mode")
 }
 
 func contains(x int, y []int) bool {
