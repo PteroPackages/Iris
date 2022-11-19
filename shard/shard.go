@@ -3,12 +3,12 @@ package shard
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"os"
 
 	"github.com/gorilla/websocket"
 	croc "github.com/parkervcp/crocgodyl"
+	"github.com/sirupsen/logrus"
 )
 
 type Payload struct {
@@ -16,14 +16,22 @@ type Payload struct {
 	Args  []string `json:"args"`
 }
 
+func (p *Payload) Bytes() []byte {
+	b := &bytes.Buffer{}
+	for _, a := range p.Args {
+		b.WriteString(a)
+	}
+
+	return b.Bytes()
+}
+
 type Shard struct {
 	client *croc.Client
 	cancel chan struct{}
+	log    *logrus.Logger
 	uuid   string
-	dpath  string
-	lpath  string
+	path   string
 	data   *bytes.Buffer
-	log    *bytes.Buffer
 }
 
 func (s *Shard) UUID() string {
@@ -48,53 +56,49 @@ func (s *Shard) Launch() error {
 	}()
 
 	go func() {
-		defer s.save()
+		defer func() {
+			f, err := os.Create(s.path)
+			if err != nil {
+				s.log.WithError(err).WithField("uuid", s.uuid).Error("failed to open shard log file")
+				return
+			}
+
+			defer f.Close()
+			f.Write(s.data.Bytes())
+		}()
 
 		buf, err := json.Marshal(&Payload{Event: "auth", Args: []string{a.Token}})
 		if err != nil {
-			// need a way to log this somehow
+			s.log.WithError(err).WithField("uuid", s.uuid).Errorf("failed to marshal json")
 			return
 		}
 		conn.WriteMessage(websocket.TextMessage, buf)
 
 		for {
 			mtype, msg, err := conn.ReadMessage()
+			if mtype == websocket.CloseMessage {
+				s.log.WithField("uuid", s.uuid).Debug("socket closed unexpectedly")
+				return
+			}
+
 			if err != nil {
-				s.log.WriteString(fmt.Sprintf("error reading message: %s\n", err))
+				s.log.WithError(err).WithField("uuid", s.uuid).Error("failed to read message")
 				continue
 			}
 
-			switch mtype {
-			case websocket.CloseMessage:
-				_ = conn.Close()
-				return
-			case websocket.TextMessage:
-				s.data.Write(msg)
-			default:
+			if mtype != websocket.TextMessage {
 				continue
 			}
+
+			var data *Payload
+			if err = json.Unmarshal(msg, &data); err != nil {
+				s.log.WithError(err).WithField("uuid", s.uuid).Warn("failed to unmarshal payload")
+				continue
+			}
+
+			s.data.Write(data.Bytes())
 		}
 	}()
-
-	return nil
-}
-
-func (s *Shard) save() error {
-	fd, err := os.Open(s.dpath)
-	if err != nil {
-		return err
-	}
-
-	defer fd.Close()
-	fd.Write(s.data.Bytes())
-
-	fl, err := os.Open(s.lpath)
-	if err != nil {
-		return err
-	}
-
-	defer fl.Close()
-	fl.Write(s.log.Bytes())
 
 	return nil
 }

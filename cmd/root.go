@@ -23,6 +23,7 @@ var rootCmd = &cobra.Command{
 			DisableColors: false,
 			data:          &bytes.Buffer{},
 		})
+		log.SetLevel(logrus.DebugLevel) // TODO: switch to cmd flag
 
 		cfg, err := config.Get()
 		if err != nil {
@@ -48,7 +49,7 @@ var rootCmd = &cobra.Command{
 			log.WithError(err).Fatalf("failed to get panel servers")
 		}
 
-		manager := shard.NewManager(cfg.Panel.URL, cfg.Panel.Key)
+		manager := shard.NewManager(cfg.Panel.URL, cfg.Panel.Key, log)
 
 		for _, s := range servers {
 			if !contains(s.Node, cfg.Panel.Nodes) {
@@ -57,9 +58,7 @@ var rootCmd = &cobra.Command{
 			}
 
 			log.WithField("uuid", s.UUID).Info("creating shard")
-			if err = manager.CreateShard(s.UUID, cfg.DataDirectory); err != nil {
-				log.WithError(err).WithField("uuid", s.UUID).Warn("failed to create shard")
-			}
+			manager.Create(s.UUID, cfg.DataDirectory)
 		}
 
 		if manager.Count() == 0 {
@@ -74,7 +73,7 @@ var rootCmd = &cobra.Command{
 
 		launched := 0
 
-		for _, s := range manager.All() {
+		for _, s := range manager.Shards() {
 			if err = s.Launch(); err != nil {
 				log.WithError(err).WithField("uuid", s.UUID()).Warn("failed to launch shard")
 				continue
