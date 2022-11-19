@@ -1,6 +1,7 @@
 package shard
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -19,8 +20,10 @@ type Shard struct {
 	client *croc.Client
 	cancel chan struct{}
 	uuid   string
-	data   *os.File
-	log    *os.File
+	dpath  string
+	lpath  string
+	data   *bytes.Buffer
+	log    *bytes.Buffer
 }
 
 func (s *Shard) UUID() string {
@@ -28,11 +31,6 @@ func (s *Shard) UUID() string {
 }
 
 func (s *Shard) Launch() error {
-	defer func() {
-		s.data.Close()
-		s.log.Close()
-	}()
-
 	a, err := s.client.GetServerWebSocket(s.uuid)
 	if err != nil {
 		return err
@@ -50,6 +48,8 @@ func (s *Shard) Launch() error {
 	}()
 
 	go func() {
+		defer s.save()
+
 		buf, err := json.Marshal(&Payload{Event: "auth", Args: []string{a.Token}})
 		if err != nil {
 			// need a way to log this somehow
@@ -75,6 +75,26 @@ func (s *Shard) Launch() error {
 			}
 		}
 	}()
+
+	return nil
+}
+
+func (s *Shard) save() error {
+	fd, err := os.Open(s.dpath)
+	if err != nil {
+		return err
+	}
+
+	defer fd.Close()
+	fd.Write(s.data.Bytes())
+
+	fl, err := os.Open(s.lpath)
+	if err != nil {
+		return err
+	}
+
+	defer fl.Close()
+	fl.Write(s.log.Bytes())
 
 	return nil
 }

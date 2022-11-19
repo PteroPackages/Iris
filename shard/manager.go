@@ -1,6 +1,7 @@
 package shard
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"time"
@@ -39,22 +40,15 @@ func (m *Manager) CreateShard(uuid, path string) error {
 		return err
 	}
 
-	fd, err := os.Create(filepath.Join(path, time.Now().Format("02-06-2006-150405.data")))
-	if err != nil {
-		return err
-	}
-
-	fl, err := os.Create(filepath.Join(path, time.Now().Format("02-06-2006-150405.log")))
-	if err != nil {
-		return err
-	}
-
+	t := time.Now()
 	s := &Shard{
 		client: m.client,
 		cancel: m.cancel,
 		uuid:   uuid,
-		data:   fd,
-		log:    fl,
+		dpath:  filepath.Join(path, t.Format("02-06-2006-150405.data")),
+		lpath:  filepath.Join(path, t.Format("02-06-2006-150405.data")),
+		data:   &bytes.Buffer{},
+		log:    &bytes.Buffer{},
 	}
 	m.shards = append(m.shards, s)
 
