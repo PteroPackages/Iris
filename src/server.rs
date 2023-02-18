@@ -1,4 +1,4 @@
-use futures_util::StreamExt;
+use futures_util::{SinkExt, StreamExt};
 use hyper::{
     body::{aggregate, Body, Buf},
     client::{Client, HttpConnector},
@@ -7,10 +7,13 @@ use hyper::{
     Request, StatusCode,
 };
 use hyper_tls::HttpsConnector;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::{fmt::Write, fs::File};
 use tokio::io::AsyncWriteExt;
-use tokio_tungstenite::{tungstenite::protocol::Role, WebSocketStream};
+use tokio_tungstenite::{
+    tungstenite::{protocol::Role, Message},
+    WebSocketStream,
+};
 use url::Url;
 
 use super::error::{Error, ErrorKind};
@@ -38,6 +41,10 @@ impl<'a> Server<'a> {
             conn,
             log: Default::default(),
         })
+    }
+
+    pub fn id(&self) -> &String {
+        &self.id
     }
 
     pub async fn connect(&mut self) -> Result<(), Error> {
@@ -82,8 +89,10 @@ impl<'a> Server<'a> {
             .body(Body::empty())?;
 
         match upgrade::on(&mut wsr).await {
-            Ok(up) => self
-                .handle_connection(WebSocketStream::from_raw_socket(up, Role::Client, None).await),
+            Ok(up) => self.handle_connection(
+                WebSocketStream::from_raw_socket(up, Role::Client, None).await,
+                auth.data.token,
+            ),
             Err(e) => {
                 return Err(Error {
                     kind: ErrorKind::UpgradeFailed,
@@ -96,10 +105,13 @@ impl<'a> Server<'a> {
         Ok(())
     }
 
-    async fn handle_connection(&mut self, stream: WebSocketStream<Upgraded>) {
-        let (_, mut incoming) = stream.split();
+    async fn handle_connection(&mut self, stream: WebSocketStream<Upgraded>, token: String) {
+        let (mut outgoing, mut incoming) = stream.split();
 
-        // TODO: figure out how to send the token
+        if let Err(e) = outgoing.send(Payload::from("auth", &[&token])).await {
+            eprintln!("failed to send auth token: {e}");
+            return;
+        }
 
         for msg in (incoming.next().await).into_iter().flatten() {
             if msg.is_binary() {
@@ -127,10 +139,32 @@ impl<'a> Server<'a> {
     }
 }
 
+#[derive(Debug, Serialize)]
+struct Payload {
+    pub event: String,
+    pub args: Vec<String>,
+}
+
+impl Payload {
+    fn new(event: &str, args: &[&str]) -> Self {
+        Self {
+            event: event.to_string(),
+            args: args.iter().map(ToString::to_string).collect(),
+        }
+    }
+
+    pub fn from(event: &str, args: &[&str]) -> Message {
+        let p = Self::new(event, args);
+        let d = serde_json::to_string(&p).unwrap();
+
+        Message::text(d)
+    }
+}
+
 #[derive(Debug, Deserialize)]
 struct SocketAuthInner {
     pub socket: String,
-    // pub token: String,
+    pub token: String,
 }
 
 #[derive(Debug, Deserialize)]

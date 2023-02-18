@@ -99,5 +99,5 @@ fn get_path() -> Option<&'static str> {
 
 #[cfg(target_family = "windows")]
 fn get_path() -> Option<&'static str> {
-    todo!()
+    Some(r".\config.yml")
 }

@@ -33,7 +33,10 @@ async fn main() {
                 eprintln!("{e}");
             }
         }
-        None => (),
+        None => {
+            // how the fuck do you make --help default with clap???
+            eprintln!("Rerun with '--help' for more information");
+        }
     }
 }
 
@@ -55,6 +58,7 @@ async fn run() -> Result<(), error::Error> {
         if let Err(e) = server.connect().await {
             eprintln!("{e}")
         }
+        println!("{}: connected", server.id())
     }
 
     Ok(())
