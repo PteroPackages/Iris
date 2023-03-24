@@ -1,0 +1,13 @@
+name: iris
+version: 0.1.0
+
+authors:
+  - Devonte W <https://github.com/devnote-dev>
+
+targets:
+  iris:
+    main: src/iris.cr
+
+crystal: 1.7.0
+
+license: MIT

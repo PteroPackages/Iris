@@ -1,0 +1,9 @@
+/.vscode/
+/docs/
+/lib/
+/bin/
+/test/
+/.shards/
+*.dwarf
+
+README.md
