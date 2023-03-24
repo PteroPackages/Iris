@@ -4,6 +4,18 @@ version: 0.1.0
 authors:
   - Devonte W <https://github.com/devnote-dev>
 
+dependencies:
+  cling:
+    github: devnote-dev/cling
+
+  crest:
+    github: mamantoha/crest
+
+development_dependencies:
+  ameba:
+    github: crystal-ameba/ameba
+    version: ~> 1.4.0
+
 targets:
   iris:
     main: src/iris.cr
