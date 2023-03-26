@@ -15,16 +15,68 @@ Colorize.on_tty_only!
 module Iris
   VERSION = "0.1.0"
 
-  module Manager
+  class Manager
     Log = ::Log.for(self)
 
-    @@servers : Array(Server) = [] of Server
+    @config : Config
+    @client : Crest::Resource
+    @servers : Array(Server) = [] of Server
+
+    private def initialize(@config : Config)
+      @client = Crest::Resource.new(
+        "#{@config.url}/api/client",
+        headers: {"Authorization" => "Bearer #{@config.key}",
+                  "Content-Type"  => "application/json",
+                  "Accept"        => "application/json"}
+      )
+      @servers = [] of Server
+
+      launch
+    end
 
     def self.launch : Nil
+      new Config.load
+    rescue ex
+      Log.fatal(exception: ex) { "failed to load configuration" }
+    end
+
+    private def launch : Nil
+      Log.fatal { "no server identifiers specified" } if @config.servers.empty?
+
+      data = [] of ServerMeta
+      @config.servers.each do |id|
+        Log.info { "fetching data for server: #{id}" }
+
+        meta = fetch_server id
+        if meta.status == "suspended" || meta.is_node_under_maintenance?
+          Log.warn { "server #{id} is not accessible right now" }
+          next
+        end
+
+        data << meta
+      rescue ex : Crest::RequestFailed
+        Log.error(exception: ex) { "failed to fetch server meta" }
+      end
+
+      Log.info { "launching #{data.size} servers" }
+      data.each do |meta|
+        server = Server.new meta, @client
+        server.connect
+        @servers << server
+      end
+
+      Log.info { "launch completed, watching servers" }
+    end
+
+    private def fetch_server(id : String) : ServerMeta
+      res = @client.get "/servers/#{id}"
+      data = Fractal(ServerMeta).from_json res.body
+
+      data.attributes
     end
   end
 
-  class App < Cling::MainCommand
+  class App < Cling::Command
     def setup : Nil
       @name = "iris"
     end
