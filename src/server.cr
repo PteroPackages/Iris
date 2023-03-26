@@ -9,7 +9,7 @@ module Iris
 
     def initialize(@meta, @client)
       @id = @meta.identifier
-      @log = ::Log.for @id
+      @log = ::Log.for(@id, :debug)
       @open = false
     end
 
@@ -21,9 +21,10 @@ module Iris
       log.info { "attempting to connect to websocket" }
 
       res = @client.get "/servers/#{@id}/websocket"
-      auth = Auth.from_json res.body
+      auth = AuthMeta.from_json(res.body).data
+      uri = URI.parse @client.url
 
-      @ws = HTTP::WebSocket.new auth.socket, HTTP::Headers{"Origin" => @client.url}
+      @ws = HTTP::WebSocket.new auth.socket, HTTP::Headers{"Origin" => uri.host || ""}
       ws.on_message &->on_message(String)
       ws.on_close &->on_close(HTTP::WebSocket::CloseCode, String)
 
