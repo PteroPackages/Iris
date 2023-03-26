@@ -8,6 +8,7 @@ require "log"
 require "yaml"
 
 require "./config"
+require "./models"
 require "./server"
 
 Colorize.on_tty_only!
