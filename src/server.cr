@@ -1,17 +1,16 @@
 module Iris
-  struct Auth
-    include JSON::Serializable
-
-    getter socket : String
-    getter token : String
-  end
-
   class Server
     @id : String
-    @uri : URI
+    @meta : ServerMeta
+    @client : Crest::Resource
     @ws : HTTP::WebSocket?
+    @open : Bool
+    private getter log : Log
 
-    def initialize(@id, @uri)
+    def initialize(@meta, @client)
+      @id = @meta.identifier
+      @log = ::Log.for @id
+      @open = false
     end
 
     private def ws : HTTP::WebSocket
@@ -19,7 +18,81 @@ module Iris
     end
 
     def connect : Nil
-      # auth = Manager.get_auth_data @id
+      log.info { "attempting to connect to websocket" }
+
+      res = @client.get "/servers/#{@id}/websocket"
+      auth = Auth.from_json res.body
+
+      @ws = HTTP::WebSocket.new auth.socket, HTTP::Headers{"Origin" => @client.url}
+      ws.on_message &->on_message(String)
+      ws.on_close &->on_close(HTTP::WebSocket::CloseCode, String)
+
+      log.info { "starting connection to websocket" }
+
+      spawn ws.run
+      ws.send Payload.new("auth", [auth.token]).to_json
     end
+
+    private def reconnect : Nil
+    end
+
+    private def send_auth : Nil
+    end
+
+    private def on_message(message : String) : Nil
+      unless @open
+        @open = true
+        send_auth
+      end
+
+      log.debug { message }
+      payload = Payload.from_json message
+
+      case payload.event
+      when "auth success"
+        log.info { "authentication successful" }
+      when "token expiring"
+        send_auth
+      when "token expired"
+        reconnect
+      end
+    end
+
+    private def on_close(code : HTTP::WebSocket::CloseCode, message : String) : Nil
+      log.trace &.emit("closed: #{message}", code: code.to_s)
+    end
+  end
+
+  struct Auth
+    include JSON::Serializable
+
+    getter socket : String
+    getter token : String
+  end
+
+  struct Payload
+    include JSON::Serializable
+
+    getter event : String
+    getter args : Array(String)
+
+    def initialize(@event : String, @args : Array(String))
+    end
+  end
+
+  struct Fractal(M)
+    include JSON::Serializable
+
+    getter attributes : M
+  end
+
+  struct ServerMeta
+    include JSON::Serializable
+
+    getter identifier : String
+    getter uuid : String
+    getter name : String
+    getter status : String
+    getter? is_node_under_maintenance : Bool
   end
 end
