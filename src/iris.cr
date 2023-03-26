@@ -42,6 +42,14 @@ module Iris
 
     private def launch : Nil
       Log.fatal { "no server identifiers specified" } if @config.servers.empty?
+      Log.info { "testing panel connection" }
+
+      begin
+        @client.get "/"
+      rescue ex : Crest::RequestFailed
+        Log.fatal(exception: ex) { "failed to connect to the panel" }
+        exit 1
+      end
 
       data = [] of ServerMeta
       @config.servers.each do |id|
