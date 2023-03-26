@@ -5,5 +5,7 @@
 /test/
 /.shards/
 *.dwarf
+iris.yml
+iris.yaml
 
 README.md
