@@ -6,6 +6,12 @@ module Iris
     getter token : String
   end
 
+  struct AuthMeta
+    include JSON::Serializable
+
+    getter data : Auth
+  end
+
   struct Fractal(M)
     include JSON::Serializable
 
@@ -28,7 +34,7 @@ module Iris
     getter identifier : String
     getter uuid : String
     getter name : String
-    getter status : String
+    getter status : String?
     getter? is_node_under_maintenance : Bool
   end
 end
