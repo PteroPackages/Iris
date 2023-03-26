@@ -5,6 +5,7 @@ require "http/headers"
 require "http/web_socket"
 require "json"
 require "log"
+require "uri"
 require "yaml"
 
 require "./config"
@@ -17,7 +18,7 @@ module Iris
   VERSION = "0.1.0"
 
   class Manager
-    Log = ::Log.for(self)
+    Log = ::Log.for(self, :debug)
 
     @config : Config
     @client : Crest::Resource
@@ -37,8 +38,6 @@ module Iris
 
     def self.launch : Nil
       new Config.load
-    rescue ex
-      Log.fatal(exception: ex) { "failed to load configuration" }
     end
 
     private def launch : Nil
