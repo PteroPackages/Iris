@@ -20,11 +20,10 @@ module Iris
     def connect : Nil
       log.info { "attempting to connect to websocket" }
 
-      res = @client.get "/servers/#{@id}/websocket"
+      res = @client.get "/api/client/servers/#{@id}/websocket"
       auth = AuthMeta.from_json(res.body).data
-      uri = URI.parse @client.url
 
-      @ws = HTTP::WebSocket.new auth.socket, HTTP::Headers{"Origin" => uri.host || ""}
+      @ws = HTTP::WebSocket.new auth.socket, HTTP::Headers{"Origin" => @client.url}
       ws.on_message &->on_message(String)
       ws.on_close &->on_close(HTTP::WebSocket::CloseCode, String)
 

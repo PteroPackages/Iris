@@ -5,7 +5,6 @@ require "http/headers"
 require "http/web_socket"
 require "json"
 require "log"
-require "uri"
 require "yaml"
 
 require "./config"
@@ -26,7 +25,7 @@ module Iris
 
     private def initialize(@config : Config)
       @client = Crest::Resource.new(
-        "#{@config.url}/api/client",
+        @config.url,
         headers: {"Authorization" => "Bearer #{@config.key}",
                   "Content-Type"  => "application/json",
                   "Accept"        => "application/json"}
@@ -45,7 +44,7 @@ module Iris
       Log.info { "testing panel connection" }
 
       begin
-        @client.get "/"
+        @client.get "/api/client"
       rescue ex : Crest::RequestFailed
         Log.fatal(exception: ex) { "failed to connect to the panel" }
         exit 1
@@ -77,7 +76,7 @@ module Iris
     end
 
     private def fetch_server(id : String) : ServerMeta
-      res = @client.get "/servers/#{id}"
+      res = @client.get "/api/client/servers/#{id}"
       data = Fractal(ServerMeta).from_json res.body
 
       data.attributes
