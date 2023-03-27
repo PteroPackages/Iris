@@ -2,14 +2,14 @@ module Iris
   struct Auth
     include JSON::Serializable
 
-    getter socket : String
-    getter token : String
+    getter data : AuthData
   end
 
-  struct AuthMeta
+  struct AuthData
     include JSON::Serializable
 
-    getter data : Auth
+    getter socket : String
+    getter token : String
   end
 
   struct Fractal(M)
