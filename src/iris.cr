@@ -42,9 +42,10 @@ module Iris
     private def launch : Nil
       Log.fatal { "no server identifiers specified" } if @config.servers.empty?
       Log.info { "testing panel connection" }
+      Log.debug { "using origin: #{@config.url}" }
 
       begin
-        @client.get "/api/client"
+        @client.head "/api/client"
       rescue ex : Crest::RequestFailed
         Log.fatal(exception: ex) { "failed to connect to the panel" }
         exit 1
@@ -67,8 +68,7 @@ module Iris
 
       Log.info { "launching #{data.size} servers" }
       data.each do |meta|
-        server = Server.new meta, @client
-        server.connect
+        server = Server.new meta, @client, @config.url
         @servers << server
       end
 
