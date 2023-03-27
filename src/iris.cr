@@ -76,7 +76,7 @@ module Iris
       sig = Channel(Nil).new
       Process.on_interrupt do
         Log.info { "closing #{data.size} server connections" }
-        @servers.map &.close
+        @servers.each &.close
         sig.send nil
       end
 
