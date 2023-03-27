@@ -24,7 +24,23 @@ module Iris
     getter event : String
     getter args : Array(String) = [] of String
 
-    def initialize(@event : String, @args : Array(String))
+    def initialize(@event, @args)
+    end
+
+    def as_stats : Stats
+      Stats.from_json @args.join
+    end
+  end
+
+  struct Record
+    include JSON::Serializable
+
+    getter time : String
+    getter name : String
+    getter metadata : String?
+
+    def initialize(@name, @metadata = nil)
+      @time = Time.utc.to_s
     end
   end
 
