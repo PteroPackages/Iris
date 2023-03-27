@@ -29,6 +29,12 @@ module Iris
     private def send_auth : Nil
     end
 
+    def close : Nil
+      # TODO: add log saving stuff
+      log.debug { "closing" }
+      @ws.close :going_away
+    end
+
     private def on_message(message : String) : Nil
       log.debug { message }
       payload = Payload.from_json message
@@ -46,7 +52,7 @@ module Iris
     end
 
     private def on_close(code : HTTP::WebSocket::CloseCode, message : String) : Nil
-      log.trace &.emit("closed: #{message}", code: code.to_s)
+      log.debug &.emit("closed: #{message}", code: code.to_s)
     end
   end
 end
