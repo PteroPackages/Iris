@@ -22,7 +22,7 @@ module Iris
     include JSON::Serializable
 
     getter event : String
-    getter args : Array(String)
+    getter args : Array(String) = [] of String
 
     def initialize(@event : String, @args : Array(String))
     end
