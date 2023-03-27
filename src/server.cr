@@ -6,9 +6,9 @@ module Iris
     @ws : HTTP::WebSocket
     private getter log : Log
 
-    def initialize(@meta, @client, origin)
+    def initialize(@meta, @client, origin : String, debug : Bool)
       @id = @meta.identifier
-      @log = ::Log.for(@id, :debug)
+      @log = ::Log.for(@id, debug ? Log::Severity::Debug : nil)
 
       log.info { "attempting to connect to websocket" }
       res = @client.get "/api/client/servers/#{@id}/websocket"

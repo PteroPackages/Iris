@@ -42,7 +42,6 @@ module Iris
     private def launch : Nil
       Log.fatal { "no server identifiers specified" } if @config.servers.empty?
       Log.info { "testing panel connection" }
-      Log.debug { "using origin: #{@config.url}" }
 
       begin
         @client.head "/api/client"
@@ -68,7 +67,7 @@ module Iris
 
       Log.info { "launching #{data.size} servers" }
       data.each do |meta|
-        server = Server.new meta, @client, @config.url
+        server = Server.new meta, @client, @config.url, @config.debug?
         @servers << server
       end
 

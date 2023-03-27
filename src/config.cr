@@ -1,11 +1,12 @@
 module Iris
-  class Config
+  struct Config
     include YAML::Serializable
 
-    property url : String
-    property key : String # TODO: replace with custom JWT impl
-    property data : String
-    property servers : Array(String)
+    getter url : String
+    getter key : String # TODO: replace with custom JWT impl
+    getter? debug : Bool
+    getter data : String
+    getter servers : Array(String)
 
     def self.load : Config
       path = case
