@@ -72,15 +72,15 @@ module Iris
       end
 
       Log.info { "launch completed, watching servers" }
-      at_exit do
-        Log.info { "closing #{data.size} server connections" }
-        @servers.map &.close
-      end
 
       sig = Channel(Nil).new
-      loop do
-        sig.send(nil) if sig.receive
+      Process.on_interrupt do
+        Log.info { "closing #{data.size} server connections" }
+        @servers.map &.close
+        sig.send nil
       end
+
+      sig.receive
     end
 
     private def fetch_server(id : String) : ServerMeta
