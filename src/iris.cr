@@ -7,6 +7,7 @@ require "json"
 require "log"
 require "yaml"
 
+require "./commands/*"
 require "./iris/*"
 
 Colorize.on_tty_only!
@@ -17,6 +18,8 @@ module Iris
   class App < Cling::Command
     def setup : Nil
       @name = "iris"
+
+      add_command Commands::Config.new
     end
 
     def run(arguments : Cling::Arguments, options : Cling::Options) : Nil
