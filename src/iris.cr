@@ -21,10 +21,10 @@ module Iris
 
       add_command Commands::Config.new
       add_command Commands::Env.new
+      add_command Commands::Run.new
     end
 
     def run(arguments : Cling::Arguments, options : Cling::Options) : Nil
-      Manager.launch
     end
   end
 end
