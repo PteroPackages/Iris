@@ -24,6 +24,10 @@ module Iris
     end
 
     def self.load_and_check : Config
+      unless Dir.exists? DATA_HOME / "data"
+        Dir.mkdir_p DATA_HOME / "data"
+      end
+
       unless Dir.exists? DATA_HOME / "extensions"
         Dir.mkdir_p DATA_HOME / "extensions"
       end

@@ -63,7 +63,7 @@ module Iris
       data.each do |meta|
         Log.info { "opening data log for #{meta.identifier}" }
 
-        dir = Config::DATA_HOME / meta.uuid / Time.utc.to_s("%F")
+        dir = Config::DATA_HOME / "data" / meta.uuid / Time.utc.to_s("%F")
         Dir.mkdir_p dir
 
         t = Time.utc.to_s "%s"
