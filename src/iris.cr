@@ -20,6 +20,7 @@ module Iris
       @name = "iris"
 
       add_command Commands::Config.new
+      add_command Commands::Env.new
     end
 
     def run(arguments : Cling::Arguments, options : Cling::Options) : Nil
