@@ -5,6 +5,16 @@ module Iris
     getter attributes : M
   end
 
+  struct Event
+    include JSON::Serializable
+
+    getter op : Int8
+    getter d : Payload | String
+
+    def initialize(@op, @d)
+    end
+  end
+
   struct Payload
     include JSON::Serializable
 
