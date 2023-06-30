@@ -4,15 +4,18 @@ module Iris
     @uuid : String
     @client : Client
     @ws : HTTP::WebSocket
-    @lf : File
-    @df : File
+
+    @lf : String
+    @df : String
+    @io : IO::Memory
     @events : Array(Event)
     getter log : Log
 
-    def initialize(meta : ServerMeta, @client : Client, @lf : File, @df : File)
+    def initialize(meta : ServerMeta, @client : Client, @lf : String, @df : String)
       @id = meta.identifier
       @uuid = meta.uuid
       @ws = uninitialized HTTP::WebSocket
+      @io = IO::Memory.new
       @events = [] of Event
       @log = ::Log.for(@id, :debug)
 
@@ -32,9 +35,9 @@ module Iris
     end
 
     def close : Nil
-      @df.write @events.to_json.to_slice
-      @df.close
-      @lf.close
+      File.write @lf, @io.to_s
+      File.write @df, @events.to_json
+
       log.debug { "closing" }
       @ws.close :going_away
     end
@@ -47,7 +50,7 @@ module Iris
       when "auth success"
         log.info { "authentication successful" }
       when "console output", "daemon output"
-        @lf.write payload.args.join('\n').to_slice
+        @io << payload.args.join '\n'
       when "daemon error"
         @events << Event.new(0, payload)
         @events << Event.new(1, "daemon error")
@@ -56,7 +59,7 @@ module Iris
       when "install completed"
         @events << Event.new(1, "install state end")
       when "install output"
-        @lf.write payload.args.join('\n').to_slice
+        @io << payload.args.join '\n'
       when "jwt error"
         log.error { payload.args.join }
         @events << Event.new(0, payload)
@@ -71,7 +74,7 @@ module Iris
         @ws.close
         reconnect
       when "transfer logs"
-        @lf.write payload.args.join('\n').to_slice
+        @io << payload.args.join '\n'
       when "transfer status"
         @events << Event.new(0, payload)
       else

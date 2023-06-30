@@ -67,11 +67,11 @@ module Iris
         Dir.mkdir_p dir
 
         t = Time.utc.to_s "%s"
-        lf = File.open(dir / "#{t}.log", mode: "w")
-        df = File.open(dir / "#{t}.json", mode: "w")
+        File.touch(lf = dir / "#{t}.log")
+        File.touch(df = dir / "#{t}.json")
 
         Log.info { "launching server #{meta.identifier}" }
-        @servers << Server.new(meta, @client, lf, df)
+        @servers << Server.new(meta, @client, lf.to_s, df.to_s)
       end
 
       Log.info { "launch complete, watching servers" }
