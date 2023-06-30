@@ -60,9 +60,21 @@ module Iris
         Log.error(exception: ex) { "failed to fetch server meta" }
       end
 
-      Log.info { "launching #{data.size} servers" }
-      data.each { |meta| @servers << Server.new(meta, @client) }
-      Log.info { "launch completed, watching servers" }
+      data.each do |meta|
+        Log.info { "opening data log for #{meta.identifier}" }
+
+        dir = Config::DATA_HOME / meta.uuid / Time.utc.to_s("%F")
+        Dir.mkdir_p dir
+
+        t = Time.utc.to_s "%s"
+        lf = File.open(dir / "#{t}.log", mode: "w")
+        df = File.open(dir / "#{t}.json", mode: "w")
+
+        Log.info { "launching server #{meta.identifier}" }
+        @servers << Server.new(meta, @client, lf, df)
+      end
+
+      Log.info { "launch complete, watching servers" }
 
       sig = Channel(Nil).new
       Process.on_interrupt do
