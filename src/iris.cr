@@ -7,6 +7,7 @@ require "json"
 require "log"
 require "yaml"
 
+require "./client"
 require "./config"
 require "./models"
 require "./server"
@@ -20,31 +21,25 @@ module Iris
     Log = ::Log.for(self, :debug)
 
     @config : Config
-    @client : Crest::Resource
-    @servers : Array(Server) = [] of Server
+    @client : Client
+    @servers : Array(Server)
+
+    def self.launch : Nil
+      new Config.load_and_check
+    end
 
     private def initialize(@config : Config)
-      @client = Crest::Resource.new(
-        @config.url,
-        headers: {"Authorization" => "Bearer #{@config.key}",
-                  "Content-Type"  => "application/json",
-                  "Accept"        => "application/json"}
-      )
+      @client = Client.new @config.panel_url, @config.panel_key
       @servers = [] of Server
 
       launch
     end
 
-    def self.launch : Nil
-      new Config.load
-    end
-
     private def launch : Nil
-      Log.fatal { "no server identifiers specified" } if @config.servers.empty?
       Log.info { "testing panel connection" }
 
       begin
-        @client.head "/api/client"
+        @client.test_connection
       rescue ex : Crest::RequestFailed
         Log.fatal(exception: ex) { "failed to connect to the panel" }
         exit 1
@@ -54,7 +49,7 @@ module Iris
       @config.servers.each do |id|
         Log.info { "fetching data for server: #{id}" }
 
-        meta = fetch_server id
+        meta = @client.get_server id
         if meta.status == "suspended" || meta.is_node_under_maintenance?
           Log.warn { "server #{id} is not accessible right now" }
           next
@@ -66,11 +61,7 @@ module Iris
       end
 
       Log.info { "launching #{data.size} servers" }
-      data.each do |meta|
-        server = Server.new meta, @client, @config.url, @config.debug?
-        @servers << server
-      end
-
+      data.each { |meta| @servers << Server.new(meta, @client) }
       Log.info { "launch completed, watching servers" }
 
       sig = Channel(Nil).new
@@ -81,23 +72,6 @@ module Iris
       end
 
       sig.receive
-    end
-
-    private def fetch_server(id : String) : ServerMeta
-      res = @client.get "/api/client/servers/#{id}"
-      data = Fractal(ServerMeta).from_json res.body
-
-      data.attributes
-    end
-  end
-
-  class App < Cling::Command
-    def setup : Nil
-      @name = "iris"
-    end
-
-    def run(arguments : Cling::Arguments, options : Cling::Options) : Nil
-      Manager.launch
     end
   end
 end
