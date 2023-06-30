@@ -19,7 +19,7 @@ development_dependencies:
 
 targets:
   iris:
-    main: src/main.cr
+    main: src/iris.cr
 
 crystal: 1.7.0
 
