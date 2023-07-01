@@ -5,18 +5,16 @@ module Iris
     @client : Client
     @ws : HTTP::WebSocket
 
-    @lf : String
-    @df : String
-    @io : IO::Memory
-    @events : Array(Event)
+    @lf : File
+    @df : File
     getter log : Log
 
-    def initialize(meta : ServerMeta, @client : Client, @lf : String, @df : String)
+    def initialize(meta : ServerMeta, @client : Client, @lf : File, @df : File)
       @id = meta.identifier
       @uuid = meta.uuid
       @ws = uninitialized HTTP::WebSocket
-      @io = IO::Memory.new
-      @events = [] of Event
+      @df.write_byte 91
+      @df.write Event.new(0).to_json.to_slice
       @log = ::Log.for(@id, :debug)
 
       log.info { "starting websocket connection" }
@@ -35,38 +33,40 @@ module Iris
     end
 
     def close : Nil
-      File.write @lf, @io.to_s
-      File.write @df, @events.to_json
+      @lf.close
+      @df.write Event.new(0).to_json.to_slice
+      @df.write_byte 93
+      @df.close
 
       log.debug { "closing" }
       @ws.close :going_away
     end
 
     private def on_message(message : String) : Nil
-      # log.debug { message }
       payload = Payload.from_json message
 
       case payload.event
       when "auth success"
         log.info { "authentication successful" }
       when "console output", "daemon output"
-        @io << payload.args.join '\n'
+        write_log payload
       when "daemon error"
-        @events << Event.new(0, payload)
-        @events << Event.new(1, "daemon error")
+        write_event "daemon error"
+        write_event payload
       when "install started"
-        @events << Event.new(1, "install state start")
+        write_event "install started"
       when "install completed"
-        @events << Event.new(1, "install state end")
+        write_event "install completed"
       when "install output"
-        @io << payload.args.join '\n'
+        write_log payload
+        write_event payload
       when "jwt error"
         log.error { payload.args.join }
-        @events << Event.new(0, payload)
+        write_event payload
       when "stats"
-        @events << Event.new(0, payload)
+        write_event payload
       when "status"
-        @events << Event.new(0, payload)
+        write_event payload
       when "token expiring"
         auth = @client.get_websocket_auth @id
         @ws.send Payload.new("auth", [auth.token]).to_json
@@ -74,12 +74,26 @@ module Iris
         @ws.close
         reconnect
       when "transfer logs"
-        @io << payload.args.join '\n'
+        write_event payload
       when "transfer status"
-        @events << Event.new(0, payload)
+        write_event payload
       else
         log.warn { "unknown event: #{payload.event}" }
       end
+    end
+
+    private def write_log(d : Payload) : Nil
+      @lf.write d.args.join('\n').to_slice
+    end
+
+    private def write_event(d : String) : Nil
+      @df.write_byte 44
+      @df.write Event.new(1, d).to_json.to_slice
+    end
+
+    private def write_event(d : Payload) : Nil
+      @df.write_byte 44
+      @df.write Event.new(2, d).to_json.to_slice
     end
 
     private def on_close(code : HTTP::WebSocket::CloseCode, message : String) : Nil
