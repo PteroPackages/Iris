@@ -9,7 +9,11 @@ module Iris
     include JSON::Serializable
 
     getter op : Int8
-    getter d : Payload | {String, Int64}
+    getter d : Int64 | {String, Int64} | Payload
+
+    def self.new(op : Int8)
+      new op, Time.utc.to_unix
+    end
 
     def self.new(op : Int8, d : String)
       new op, {d, Time.utc.to_unix}
