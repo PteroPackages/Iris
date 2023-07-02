@@ -6,18 +6,18 @@ module Iris
     @client : Client
     @servers : Array(Server)
 
-    def self.launch : Nil
-      new Config.load_and_check
+    def self.launch(debug : Bool) : Nil
+      new Config.load_and_check, debug
     end
 
-    private def initialize(@config : Config)
+    private def initialize(@config : Config, debug : Bool)
       @client = Client.new @config.panel_url, @config.panel_key
       @servers = [] of Server
 
-      launch
+      launch debug
     end
 
-    private def launch : Nil
+    private def launch(debug : Bool) : Nil
       Log.info { "testing panel connection" }
 
       begin
@@ -53,7 +53,7 @@ module Iris
         df = File.open(dir / "#{t}.json", mode: "w")
 
         Log.info { "launching server: #{meta.identifier}" }
-        @servers << Server.new(meta, @client, lf, df)
+        @servers << Server.new(meta, debug, @client, lf, df)
       end
 
       Log.info { "launch complete, watching servers" }

@@ -9,13 +9,13 @@ module Iris
     @df : File
     getter log : Log
 
-    def initialize(meta : ServerMeta, @client : Client, @lf : File, @df : File)
+    def initialize(meta : ServerMeta, debug : Bool, @client : Client, @lf : File, @df : File)
       @id = meta.identifier
       @uuid = meta.uuid
       @ws = uninitialized HTTP::WebSocket
       @df.write_byte 91
       @df.write Event.new(0).to_json.to_slice
-      @log = ::Log.for(@id, :debug)
+      @log = ::Log.for(@id, debug ? Log::Severity::Debug : Log::Severity::Info)
 
       log.info { "starting websocket connection" }
       reconnect
