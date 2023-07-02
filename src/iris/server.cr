@@ -84,6 +84,7 @@ module Iris
 
     private def write_log(d : Payload) : Nil
       @lf.write d.args.join('\n').to_slice
+      @lf.write_byte 10
     end
 
     private def write_event(d : String) : Nil
