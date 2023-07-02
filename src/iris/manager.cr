@@ -39,11 +39,11 @@ module Iris
 
         data << meta
       rescue ex : Crest::RequestFailed
-        Log.error(exception: ex) { "failed to fetch server meta" }
+        Log.error(exception: ex) { "failed to fetch server metadata" }
       end
 
       data.each do |meta|
-        Log.info { "opening data log for #{meta.identifier}" }
+        Log.debug { "opening data log: #{meta.uuid}" }
 
         dir = Config::DATA_HOME / "data" / meta.uuid / Time.utc.to_s("%F")
         Dir.mkdir_p dir
@@ -52,7 +52,7 @@ module Iris
         lf = File.open(dir / "#{t}.log", mode: "w")
         df = File.open(dir / "#{t}.json", mode: "w")
 
-        Log.info { "launching server #{meta.identifier}" }
+        Log.info { "launching server: #{meta.identifier}" }
         @servers << Server.new(meta, @client, lf, df)
       end
 

@@ -22,28 +22,32 @@ module Iris
     end
 
     private def reconnect : Nil
+      log.debug { "fetching websocket auth" }
       auth = @client.get_websocket_auth @id
+
       @ws = HTTP::WebSocket.new auth.socket, HTTP::Headers{"Origin" => @client.url}
       @ws.on_message { |msg| on_message msg }
       @ws.on_close { |code, msg| on_close code, msg }
+
+      log.debug { "starting websocket listener" }
       spawn @ws.run
 
-      log.info { "sending auth token" }
+      log.debug { "sending auth token" }
       @ws.send Payload.new("auth", [auth.token]).to_json
     end
 
     def close : Nil
+      log.info { "closing files and connection" }
       @lf.close
       @df.write Event.new(0).to_json.to_slice
       @df.write_byte 93
       @df.close
-
-      log.debug { "closing" }
       @ws.close :going_away
     end
 
     private def on_message(message : String) : Nil
       payload = Payload.from_json message
+      log.debug { "incoming: #{payload.event}" }
 
       case payload.event
       when "auth success"
@@ -68,9 +72,11 @@ module Iris
       when "status"
         write_event payload
       when "token expiring"
+        log.info { "reauthenticating" }
         auth = @client.get_websocket_auth @id
         @ws.send Payload.new("auth", [auth.token]).to_json
       when "token expired"
+        log.info { "session expired, reconnecting" }
         @ws.close
         reconnect
       when "transfer logs"
