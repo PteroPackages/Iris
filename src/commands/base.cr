@@ -69,12 +69,20 @@ module Iris::Commands
         error ex
         error "See 'iris --help' for more information"
         return
+      elsif ex.is_a? Cling::ExecutionError
+        on_invalid_option ex.to_s
+        return
       end
 
       error "Unexpected exception:"
       error ex
       error "Please report this on the Iris GitHub issues:"
       error "https://github.com/PteroPackages/Iris/issues"
+    end
+
+    def on_missing_arguments(args : Array(String))
+      error %(Missing required argument#{"s" if args.size > 1}: #{args.join ","})
+      exit 1
     end
 
     def on_unknown_arguments(args : Array(String))
@@ -84,6 +92,16 @@ module Iris::Commands
       end
 
       error "Unexpected argument#{"s" if args.size > 1}: #{format}"
+      exit 1
+    end
+
+    def on_invalid_option(message : String)
+      error message
+      exit 1
+    end
+
+    def on_missing_options(options : Array(String))
+      error %(Missing required option#{"s" if options.size > 1}: #{options.join ","})
       exit 1
     end
 
