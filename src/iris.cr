@@ -1,4 +1,5 @@
 require "cling"
+require "cling/ext"
 require "colorize"
 require "crest"
 require "http/headers"
@@ -35,6 +36,7 @@ module Iris
 
       add_command Commands::Server.new
       add_command Commands::Run.new
+      add_command Commands::Config.new
       add_command Commands::Env.new
       add_command Commands::Version.new
     end
