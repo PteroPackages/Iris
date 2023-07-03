@@ -7,8 +7,12 @@ require "json"
 require "log"
 require "yaml"
 
+require "./client"
 require "./commands/*"
-require "./iris/*"
+require "./config"
+require "./manager"
+require "./models"
+require "./server"
 
 Colorize.on_tty_only!
 
