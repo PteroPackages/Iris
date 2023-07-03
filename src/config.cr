@@ -16,8 +16,8 @@ module Iris
 
     property panel_url : String
     property panel_key : String
-    property servers : Array(String)
-    property extensions : Array(String)
+    property servers : Set(String)
+    property extensions : Set(String)
 
     def self.load : Config
       from_yaml File.read(DATA_HOME / "config.yml")
