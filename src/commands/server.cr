@@ -1,10 +1,15 @@
+require "./server/*"
+
 module Iris::Commands
   class Server < Base
     def setup : Nil
       @name = "server"
       @summary = "iris server management"
 
-      add_usage "iris server [options]"
+      add_usage "iris server [command] [options]"
+      add_usage "iris server list [options]"
+
+      add_command List.new
     end
 
     def run(arguments : Cling::Arguments, options : Cling::Options) : Nil
