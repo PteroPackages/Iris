@@ -17,6 +17,13 @@ module Iris::Commands
     def setup : Nil
       @name = "list"
       @summary = "list stored servers"
+      @description = <<-DESC
+        Lists all the servers stored on the system. The output of this command can be
+        customised using the options below. Results customised with the format flags
+        will be displayed as a table.
+        DESC
+
+      add_usage "iris server list [-c|--count] [-d|--data] [-l|--log] [-p|--path] [-s|--size]"
 
       add_option 'c', "count", description: "display count of data and log files"
       add_option 'd', "data", description: "display count of data files"
