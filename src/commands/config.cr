@@ -68,6 +68,11 @@ module Iris::Commands
       add_argument "ids", multiple: true
     end
 
+    def pre_run(arguments : Cling::Arguments, options : Cling::Options) : Nil
+      super
+      on_missing_arguments %w[ids] unless arguments.has? "ids"
+    end
+
     def run(arguments : Cling::Arguments, options : Cling::Options) : Nil
       config = Iris::Config.load
       ids = arguments.get("ids").as_set
@@ -85,6 +90,11 @@ module Iris::Commands
       add_usage "iris config del-server <ids...>"
 
       add_argument "ids", multiple: true
+    end
+
+    def pre_run(arguments : Cling::Arguments, options : Cling::Options) : Nil
+      super
+      on_missing_arguments %w[ids] unless arguments.has? "ids"
     end
 
     def run(arguments : Cling::Arguments, options : Cling::Options) : Nil
