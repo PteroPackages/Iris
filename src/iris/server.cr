@@ -9,9 +9,10 @@ module Iris
     @df : File
     getter log : Log
 
-    def initialize(meta : ServerMeta, debug : Bool, @client : Client, @lf : File, @df : File)
+    def initialize(meta : ServerMeta, debug : Bool, config : Config, @lf : File, @df : File)
       @id = meta.identifier
       @uuid = meta.uuid
+      @client = Client.new config.panel_url, config.panel_key
       @ws = uninitialized HTTP::WebSocket
       @df.write_byte 91
       @df.write Event.new(0).to_json.to_slice
@@ -47,7 +48,8 @@ module Iris
 
     private def on_message(message : String) : Nil
       payload = Payload.from_json message
-      log.debug { "incoming: #{payload.event}" }
+      # This is a lot...
+      # log.debug { "incoming: #{payload.event}" }
 
       case payload.event
       when "auth success"

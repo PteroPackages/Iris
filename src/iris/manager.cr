@@ -43,7 +43,7 @@ module Iris
       end
 
       data.each do |meta|
-        Log.debug { "opening data log: #{meta.uuid}" }
+        Log.info { "opening data log: #{meta.uuid}" }
 
         dir = Config::DATA_HOME / "data" / meta.uuid / Time.utc.to_s("%F")
         Dir.mkdir_p dir
@@ -53,7 +53,7 @@ module Iris
         df = File.open(dir / "#{t}.json", mode: "w")
 
         Log.info { "launching server: #{meta.identifier}" }
-        @servers << Server.new(meta, debug, @client, lf, df)
+        @servers << Server.new(meta, debug, @config, lf, df)
       end
 
       Log.info { "launch complete, watching servers" }
