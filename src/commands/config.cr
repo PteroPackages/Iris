@@ -1,7 +1,10 @@
 module Iris::Commands
-  class Config < Cling::Command
+  class Config < Base
     def setup : Nil
       @name = "config"
+      @summary = "iris configuration management"
+
+      add_usage "iris config [options]"
     end
 
     def run(arguments : Cling::Arguments, options : Cling::Options) : Nil

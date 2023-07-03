@@ -1,9 +1,17 @@
 module Iris::Commands
-  class Env < Cling::Command
+  class Env < Base
     def setup : Nil
       @name = "env"
+      @summary = "iris environment display"
+      @description = <<-DESC
+        Displays the Iris environment/system paths. Specify the "data" argument to
+        display the data path, or specify "ext", "extension" or "extensions" argument
+        to display the extensions path.
+        DESC
 
-      add_argument "name", required: false
+      add_usage "iris env [name]"
+
+      add_argument "name"
     end
 
     def run(arguments : Cling::Arguments, options : Cling::Options) : Nil

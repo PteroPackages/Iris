@@ -22,9 +22,12 @@ module Iris
 
   BUILD_HASH = {{ `git rev-parse HEAD`.stringify[0...8] }}
 
-  class App < Cling::Command
+  class App < Commands::Base
     def setup : Nil
       @name = "iris"
+      @description = "A Pterodactyl server monitor."
+
+      add_usage "iris <command> [options]"
 
       add_command Commands::Config.new
       add_command Commands::Env.new
@@ -33,6 +36,7 @@ module Iris
     end
 
     def run(arguments : Cling::Arguments, options : Cling::Options) : Nil
+      stdout.puts help_template
     end
   end
 end
