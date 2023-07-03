@@ -1,5 +1,5 @@
 module Iris
-  struct Config
+  class Config
     include YAML::Serializable
 
     DATA_HOME = begin
@@ -14,10 +14,10 @@ module Iris
       {% end %}
     end
 
-    getter panel_url : String
-    getter panel_key : String
-    getter servers : Array(String)
-    getter extensions : Array(String)
+    property panel_url : String
+    property panel_key : String
+    property servers : Array(String)
+    property extensions : Array(String)
 
     def self.load : Config
       from_yaml File.read(DATA_HOME / "config.yml")
@@ -41,6 +41,10 @@ module Iris
 
       # TODO: check and laod extensions
       cfg
+    end
+
+    def save : Nil
+      File.write(DATA_HOME / "config.yml", to_yaml)
     end
   end
 end
