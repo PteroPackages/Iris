@@ -40,6 +40,7 @@ module Iris
     def close : Nil
       log.info { "closing files and connection" }
       @lf.close
+      @df.write_byte 44
       @df.write Event.new(0).to_json.to_slice
       @df.write_byte 93
       @df.close
