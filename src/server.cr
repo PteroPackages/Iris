@@ -15,7 +15,7 @@ module Iris
       @client = Client.new config.panel_url, config.panel_key
       @ws = uninitialized HTTP::WebSocket
       @df.write_byte 91
-      @df.write Event.new(0).to_json.to_slice
+      @df.write Event.new(0u8).to_json.to_slice
       @log = ::Log.for(@id, debug ? Log::Severity::Debug : Log::Severity::Info)
 
       log.info { "starting websocket connection" }
@@ -41,7 +41,7 @@ module Iris
       log.info { "closing files and connection" }
       @lf.close
       @df.write_byte 44
-      @df.write Event.new(0).to_json.to_slice
+      @df.write Event.new(0u8).to_json.to_slice
       @df.write_byte 93
       @df.close
       @ws.close :going_away
@@ -49,31 +49,10 @@ module Iris
 
     private def on_message(message : String) : Nil
       payload = Payload.from_json message
-      # This is a lot...
-      # log.debug { "incoming: #{payload.event}" }
 
       case payload.event
-      when "auth success"
-        log.info { "authentication successful" }
-      when "console output", "daemon output"
+      when "console output", "install output", "transfer logs", "daemon message"
         write_log payload
-      when "daemon error"
-        write_event "daemon error"
-        write_event payload
-      when "install started"
-        write_event "install started"
-      when "install completed"
-        write_event "install completed"
-      when "install output"
-        write_log payload
-        write_event payload
-      when "jwt error"
-        log.error { payload.args.join }
-        write_event payload
-      when "stats"
-        write_event payload
-      when "status"
-        write_event payload
       when "token expiring"
         log.info { "reauthenticating" }
         auth = @client.get_websocket_auth @id
@@ -82,13 +61,9 @@ module Iris
         log.info { "session expired, reconnecting" }
         @ws.close
         reconnect
-      when "transfer logs"
-        write_event payload
-      when "transfer status"
-        write_event payload
-      else
-        log.warn { "unknown event: #{payload.event}" }
       end
+
+      write_event payload
     end
 
     private def write_log(d : Payload) : Nil
@@ -96,14 +71,9 @@ module Iris
       @lf.write_byte 10
     end
 
-    private def write_event(d : String) : Nil
-      @df.write_byte 44
-      @df.write Event.new(1, d).to_json.to_slice
-    end
-
     private def write_event(d : Payload) : Nil
       @df.write_byte 44
-      @df.write Event.new(2, d).to_json.to_slice
+      @df.write Event.new(1u8, d).to_json.to_slice
     end
 
     private def on_close(code : HTTP::WebSocket::CloseCode, message : String) : Nil
