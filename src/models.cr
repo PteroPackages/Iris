@@ -8,18 +8,16 @@ module Iris
   struct Event
     include JSON::Serializable
 
-    getter op : Int8
-    getter d : Int64 | {String, Int64} | Payload
+    getter op : UInt8
+    getter d : Payload?
+    getter t : Int64
 
-    def self.new(op : Int8)
-      new op, Time.utc.to_unix
-    end
-
-    def self.new(op : Int8, d : String)
-      new op, {d, Time.utc.to_unix}
+    def self.new(op : UInt8)
+      new op, nil
     end
 
     def initialize(@op, @d)
+      @t = Time.utc.to_unix
     end
   end
 
