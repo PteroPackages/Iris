@@ -16,7 +16,6 @@ module Iris
 
     property panel_url : String
     property panel_key : String
-    property port : Int32
     property servers : Set(String)
     property extensions : Set(String)
 

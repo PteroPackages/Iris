@@ -5,7 +5,7 @@ module Iris::Commands
       @summary = "iris config management"
       @description = "Shows the current config or modifies fields with the given flags."
 
-      add_usage "fossil config [command] [--url <url>] [--key <key>] [--port <port>]"
+      add_usage "fossil config [command] [--url <url>] [--key <key>] [options]"
       add_usage "fossil config add-server <ids...>"
       add_usage "fossil config del-server <ids...>"
 
@@ -14,7 +14,6 @@ module Iris::Commands
 
       add_option "url", description: "the url to set", type: :single
       add_option "key", description: "the key to set", type: :single
-      add_option "port", description: "the port to ste", type: :single
     end
 
     def run(arguments : Cling::Arguments, options : Cling::Options) : Nil
@@ -23,7 +22,6 @@ module Iris::Commands
       if options.empty?
         stdout << "url: " << config.panel_url << '\n'
         stdout << "key: " << config.panel_key << '\n'
-        stdout << "port: " << config.port << '\n'
 
         stdout << "\nservers:"
         if config.servers.empty?
@@ -53,10 +51,6 @@ module Iris::Commands
 
       if key = options.get?("key")
         config.panel_key = key.as_s
-      end
-
-      if port = options.get?("port")
-        config.port = port.as_i
       end
 
       config.save

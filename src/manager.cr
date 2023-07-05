@@ -18,9 +18,6 @@ module Iris
     end
 
     private def launch(debug : Bool) : Nil
-      Log.info { "establishing server connection: #{@config.port}" }
-      server = TCPServer.new @config.port
-
       Log.info { "testing panel connection" }
 
       begin
@@ -61,27 +58,14 @@ module Iris
 
       Log.info { "launch complete, watching servers" }
 
-      # sig = Channel(Nil).new
+      sig = Channel(Nil).new
       Process.on_interrupt do
-        server.close
         Log.info { "closing #{data.size} server connections" }
         @servers.each &.close
-        # sig.send nil
+        sig.send nil
       end
 
-      # sig.receive
-
-      loop do
-        if socket = server.accept?
-          spawn handle_connection socket
-        else
-          break
-        end
-      end
-    end
-
-    private def handle_connection(socket : TCPSocket) : Nil
-      #
+      sig.receive
     end
   end
 end

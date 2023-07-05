@@ -6,7 +6,6 @@ require "http/headers"
 require "http/web_socket"
 require "json"
 require "log"
-require "socket"
 require "yaml"
 
 require "./client"
