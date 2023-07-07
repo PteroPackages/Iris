@@ -15,7 +15,14 @@ module Iris::Commands
     def run(arguments : Cling::Arguments, options : Cling::Options) : Nil
       config = Iris::Config.load
       socket = TCPSocket.new config.host, config.port
-      socket << "sync"
+
+      socket << "sync\n"
+      res = socket.gets
+      unless res == "done"
+        error "failed to sync running instance:"
+        error res
+      end
+
       socket.close
     rescue Socket::ConnectError
       error "no running instance available"

@@ -5,6 +5,7 @@ module Iris
     @config : Config
     @client : Client
     @servers : Array(Server)
+    @sync : Bool
 
     def self.launch(debug : Bool) : Nil
       new Config.load_and_check, debug
@@ -13,6 +14,7 @@ module Iris
     private def initialize(@config : Config, debug : Bool)
       @client = Client.new @config.panel_url, @config.panel_key
       @servers = [] of Server
+      @sync = false
 
       launch debug
     end
@@ -62,7 +64,6 @@ module Iris
 
       Process.on_interrupt do
         server.close
-        Log.info { "closing #{data.size} server connections" }
         @servers.each &.close
       end
 
@@ -76,7 +77,33 @@ module Iris
     end
 
     private def handle_connection(socket : TCPSocket) : Nil
-      # TODO
+      Log.info { "new socket connection: #{socket.remote_address}" }
+
+      # FIXME: This is faulty
+      # until socket.closed?
+      case socket.gets
+      when "sync"
+        if @sync
+          socket << "error:already syncing"
+        else
+          Log.info { "processing sync request" }
+          @sync = true
+
+          begin
+            @config = Config.load_and_check
+            socket << "done\n"
+          rescue ex
+            socket << "error: #{ex}"
+          end
+
+          @sync = false
+        end
+      else
+        socket << "error:bad request\n"
+      end
+      # end
+
+      Log.info { "socket connection closed: #{socket.remote_address}" }
     end
   end
 end
