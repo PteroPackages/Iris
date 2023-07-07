@@ -14,9 +14,10 @@ module Iris
       {% end %}
     end
 
+    property host : String
+    property port : Int32
     property panel_url : String
     property panel_key : String
-    property port : Int32
     property servers : Set(String)
     property extensions : Set(String)
 

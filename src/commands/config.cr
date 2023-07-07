@@ -12,18 +12,20 @@ module Iris::Commands
       add_command AddServer.new
       add_command DelServer.new
 
+      add_option "host", description: "the host to set", type: :single
+      add_option "port", description: "the port to set", type: :single
       add_option "url", description: "the url to set", type: :single
       add_option "key", description: "the key to set", type: :single
-      add_option "port", description: "the port to ste", type: :single
     end
 
     def run(arguments : Cling::Arguments, options : Cling::Options) : Nil
       config = Iris::Config.load
 
       if options.empty?
+        stdout << "host: " << config.host << '\n'
+        stdout << "port: " << config.port << '\n'
         stdout << "url: " << config.panel_url << '\n'
         stdout << "key: " << config.panel_key << '\n'
-        stdout << "port: " << config.port << '\n'
 
         stdout << "\nservers:"
         if config.servers.empty?
@@ -47,16 +49,20 @@ module Iris::Commands
         return
       end
 
+      if host = options.get?("host")
+        config.host = host.as_s
+      end
+
+      if port = options.get?("port")
+        config.port = port.as_i
+      end
+
       if url = options.get?("url")
         config.panel_url = url.as_s
       end
 
       if key = options.get?("key")
         config.panel_key = key.as_s
-      end
-
-      if port = options.get?("port")
-        config.port = port.as_i
       end
 
       config.save
