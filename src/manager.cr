@@ -79,29 +79,28 @@ module Iris
     private def handle_connection(socket : TCPSocket) : Nil
       Log.info { "new socket connection: #{socket.remote_address}" }
 
-      # FIXME: This is faulty
-      # until socket.closed?
-      case socket.gets
-      when "sync"
-        if @sync
-          socket << "error:already syncing"
-        else
-          Log.info { "processing sync request" }
-          @sync = true
+      while message = socket.gets
+        case message
+        when "sync"
+          if @sync
+            socket << "error:already syncing"
+          else
+            Log.info { "processing sync request" }
+            @sync = true
 
-          begin
-            @config = Config.load_and_check
-            socket << "done\n"
-          rescue ex
-            socket << "error: #{ex}"
+            begin
+              @config = Config.load_and_check
+              socket << "done\n"
+            rescue ex
+              socket << "error: #{ex}"
+            end
+
+            @sync = false
           end
-
-          @sync = false
+        else
+          socket << "error:bad request\n"
         end
-      else
-        socket << "error:bad request\n"
       end
-      # end
 
       Log.info { "socket connection closed: #{socket.remote_address}" }
     end
