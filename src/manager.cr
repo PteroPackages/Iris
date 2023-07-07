@@ -60,12 +60,12 @@ module Iris
         @servers << Server.new(meta, debug, @config, lf, df)
       end
 
-      Log.info { "launch complete, watching servers" }
-
       Process.on_interrupt do
         server.close
         @servers.each &.close
       end
+
+      Log.info { "launch complete, watching servers" }
 
       loop do
         if socket = server.accept?
@@ -83,7 +83,7 @@ module Iris
         case message
         when "sync"
           if @sync
-            socket << "error:already syncing"
+            socket << "error:already syncing\n"
           else
             Log.info { "processing sync request" }
             @sync = true
@@ -92,7 +92,7 @@ module Iris
               @config = Config.load_and_check
               socket << "done\n"
             rescue ex
-              socket << "error: #{ex}"
+              socket << "error:#{ex}\n"
             end
 
             @sync = false
