@@ -18,8 +18,8 @@ module Iris
     end
 
     private def launch(debug : Bool) : Nil
-      Log.info { "establishing server connection: #{@config.port}" }
-      server = TCPServer.new @config.port
+      Log.info { "establishing server connection: #{@config.host}:#{@config.port}" }
+      server = TCPServer.new @config.host, @config.port
 
       Log.info { "testing panel connection" }
       begin
