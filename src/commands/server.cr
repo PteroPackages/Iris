@@ -8,8 +8,10 @@ module Iris::Commands
 
       add_usage "iris server [command] [options]"
       add_usage "iris server list [options]"
+      add_usage "iris server purge [options]"
 
       add_command List.new
+      add_command Purge.new
     end
 
     def run(arguments : Cling::Arguments, options : Cling::Options) : Nil
