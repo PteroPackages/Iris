@@ -64,23 +64,15 @@ module Iris::Commands
         end
       end
 
-      done = entries.count do |entry|
-        Dir.children(entry).each { |f| File.delete f }
-        Dir.delete entry
-
-        true
-      rescue
-        false
-      end
-
       done = 0
       entries.each do |entry|
         Dir.children(entry).each do |file|
-          File.delete file
+          File.delete File.join(entry, file)
           done += 1
-        rescue
-          next
         end
+        Dir.delete entry
+      rescue ex
+        error ex
       end
 
       stdout << "Deleted " << done << " file(s)\n"
