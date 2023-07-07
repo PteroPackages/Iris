@@ -37,6 +37,7 @@ module Iris
 
       add_command Commands::Server.new
       add_command Commands::Run.new
+      add_command Commands::Sync.new
       add_command Commands::Config.new
       add_command Commands::Env.new
       add_command Commands::Version.new
