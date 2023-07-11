@@ -20,3 +20,7 @@ shards:
     git: https://github.com/mamantoha/http_proxy.git
     version: 0.10.1
 
+  lua:
+    git: https://github.com/veelenga/lua.cr.git
+    version: 0.2.0+git.commit.e8c9548a93cf6e6d7443364c5a8e5ee090ff74ec
+
