@@ -5,6 +5,7 @@ module Iris
     @config : Config
     @client : Client
     @servers : Array(Server)
+    @ext : Extension
     @sync : Bool
 
     def self.launch(debug : Bool) : Nil
@@ -14,12 +15,14 @@ module Iris
     private def initialize(@config : Config, debug : Bool)
       @client = Client.new @config.panel_url, @config.panel_key
       @servers = [] of Server
+      @ext = Extension.new @config.extensions, debug
       @sync = false
 
       launch debug
     end
 
     private def launch(debug : Bool) : Nil
+      @ext.load
       Log.info { "establishing server connection: #{@config.host}:#{@config.port}" }
       server = TCPServer.new @config.host, @config.port
 
@@ -63,6 +66,7 @@ module Iris
       Process.on_interrupt do
         server.close
         @servers.each &.close
+        @ext.close
       end
 
       Log.info { "launch complete, watching servers" }
