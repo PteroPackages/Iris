@@ -11,8 +11,8 @@ module Iris
     @lua : Lua::Stack
     @callbacks : Hash(String, Array(Lua::Function))
 
-    def initialize
-      @log = ::Log.for(self, debug ? Log::Severity::Debug : Log::Severity::Info)
+    def initialize(@names : Set(String), debug : Bool)
+      @log = ::Log.for(self)
       @lua = Lua.load
       @callbacks = Hash(String, Array(Lua::Function)).new do |hash, key|
         hash[key] = [] of Lua::Function
