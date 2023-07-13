@@ -12,7 +12,7 @@ module Iris
     @callbacks : Hash(String, Array(Lua::Function))
 
     def initialize(@names : Set(String), debug : Bool)
-      @log = ::Log.for(self)
+      @log = ::Log.for("extension", debug ? Log::Severity::Debug : Log::Severity::Info)
       @lua = Lua.load
       @callbacks = Hash(String, Array(Lua::Function)).new do |hash, key|
         hash[key] = [] of Lua::Function
