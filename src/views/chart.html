@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>Iris Chart Test</title>
+        <script src="https://cdn.jsdelivr.net/npm/frappe-charts@1.6.1/dist/frappe-charts.min.umd.js"></script>
+    </head>
+    <body>
+        <div id="chart"></div>
+        <script>
+            const data = {
+                labels: ["12am-3am", "3am-6pm", "6am-9am", "9am-12am",
+                    "12pm-3pm", "3pm-6pm", "6pm-9pm", "9am-12am"
+                ],
+                datasets: [
+                    {
+                        name: "Some Data", chartType: "bar",
+                        values: [25, 40, 30, 35, 8, 52, 17, 0]
+                    },
+                    {
+                        name: "Another Set", chartType: "bar",
+                        values: [25, 50, 0, 15, 18, 32, 27, 14]
+                    }
+                ]
+            };
+
+            const chart = new frappe.Chart("#chart", {
+                title: "My Awesome Chart",
+                data: data,
+                // type: 'line', // or 'bar', 'line', 'scatter', 'pie', 'percentage'
+                height: 250,
+                colors: ['#7cd6fd', '#743ee2']
+            });
+        </script>
+    </body>
+</html>
